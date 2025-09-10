@@ -14,16 +14,370 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string | null
+          id: string
+          ip_address: unknown | null
+          new_values: Json | null
+          old_values: Json | null
+          record_id: string | null
+          table_name: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown | null
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string | null
+          table_name?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown | null
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string | null
+          table_name?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      empresas: {
+        Row: {
+          cnpj: string | null
+          created_at: string | null
+          email: string | null
+          endereco: string | null
+          id: string
+          nome: string
+          telefone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          cnpj?: string | null
+          created_at?: string | null
+          email?: string | null
+          endereco?: string | null
+          id?: string
+          nome: string
+          telefone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          cnpj?: string | null
+          created_at?: string | null
+          email?: string | null
+          endereco?: string | null
+          id?: string
+          nome?: string
+          telefone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      ordens_servico: {
+        Row: {
+          aprovado_em: string | null
+          aprovador_id: string | null
+          certificado_gerado: boolean | null
+          created_at: string | null
+          data_conclusao: string | null
+          data_inicio: string | null
+          id: string
+          numero_certificado: string | null
+          numero_os: string
+          observacoes_escritorio: string | null
+          observacoes_tecnico: string | null
+          status: Database["public"]["Enums"]["service_status"] | null
+          tecnico_id: string | null
+          tipo_servico: string
+          updated_at: string | null
+          valvula_id: string | null
+        }
+        Insert: {
+          aprovado_em?: string | null
+          aprovador_id?: string | null
+          certificado_gerado?: boolean | null
+          created_at?: string | null
+          data_conclusao?: string | null
+          data_inicio?: string | null
+          id?: string
+          numero_certificado?: string | null
+          numero_os: string
+          observacoes_escritorio?: string | null
+          observacoes_tecnico?: string | null
+          status?: Database["public"]["Enums"]["service_status"] | null
+          tecnico_id?: string | null
+          tipo_servico: string
+          updated_at?: string | null
+          valvula_id?: string | null
+        }
+        Update: {
+          aprovado_em?: string | null
+          aprovador_id?: string | null
+          certificado_gerado?: boolean | null
+          created_at?: string | null
+          data_conclusao?: string | null
+          data_inicio?: string | null
+          id?: string
+          numero_certificado?: string | null
+          numero_os?: string
+          observacoes_escritorio?: string | null
+          observacoes_tecnico?: string | null
+          status?: Database["public"]["Enums"]["service_status"] | null
+          tecnico_id?: string | null
+          tipo_servico?: string
+          updated_at?: string | null
+          valvula_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ordens_servico_aprovador_id_fkey"
+            columns: ["aprovador_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ordens_servico_tecnico_id_fkey"
+            columns: ["tecnico_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ordens_servico_valvula_id_fkey"
+            columns: ["valvula_id"]
+            isOneToOne: false
+            referencedRelation: "valvulas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plantas: {
+        Row: {
+          created_at: string | null
+          empresa_id: string | null
+          endereco: string | null
+          id: string
+          nome: string
+          responsavel_email: string | null
+          responsavel_nome: string | null
+          responsavel_telefone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          empresa_id?: string | null
+          endereco?: string | null
+          id?: string
+          nome: string
+          responsavel_email?: string | null
+          responsavel_nome?: string | null
+          responsavel_telefone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          empresa_id?: string | null
+          endereco?: string | null
+          id?: string
+          nome?: string
+          responsavel_email?: string | null
+          responsavel_nome?: string | null
+          responsavel_telefone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plantas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          ativo: boolean | null
+          created_at: string | null
+          email: string
+          empresa_id: string | null
+          id: string
+          nome: string
+          role: Database["public"]["Enums"]["user_role"]
+          telefone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          created_at?: string | null
+          email: string
+          empresa_id?: string | null
+          id: string
+          nome: string
+          role?: Database["public"]["Enums"]["user_role"]
+          telefone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          created_at?: string | null
+          email?: string
+          empresa_id?: string | null
+          id?: string
+          nome?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          telefone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      valvulas: {
+        Row: {
+          created_at: string | null
+          diametro: string | null
+          empresa_id: string | null
+          fabricante: string | null
+          fluido: string | null
+          id: string
+          localizacao: string | null
+          material_corpo: string | null
+          material_internos: string | null
+          modelo: string | null
+          numero_serie: string | null
+          observacoes: string | null
+          periodicidade_meses: number | null
+          planta_id: string | null
+          pressao_abertura: number | null
+          pressao_fechamento: number | null
+          proxima_inspecao: string | null
+          qr_code: string | null
+          status: Database["public"]["Enums"]["valve_status"] | null
+          tag: string
+          temperatura_operacao: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          diametro?: string | null
+          empresa_id?: string | null
+          fabricante?: string | null
+          fluido?: string | null
+          id?: string
+          localizacao?: string | null
+          material_corpo?: string | null
+          material_internos?: string | null
+          modelo?: string | null
+          numero_serie?: string | null
+          observacoes?: string | null
+          periodicidade_meses?: number | null
+          planta_id?: string | null
+          pressao_abertura?: number | null
+          pressao_fechamento?: number | null
+          proxima_inspecao?: string | null
+          qr_code?: string | null
+          status?: Database["public"]["Enums"]["valve_status"] | null
+          tag: string
+          temperatura_operacao?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          diametro?: string | null
+          empresa_id?: string | null
+          fabricante?: string | null
+          fluido?: string | null
+          id?: string
+          localizacao?: string | null
+          material_corpo?: string | null
+          material_internos?: string | null
+          modelo?: string | null
+          numero_serie?: string | null
+          observacoes?: string | null
+          periodicidade_meses?: number | null
+          planta_id?: string | null
+          pressao_abertura?: number | null
+          pressao_fechamento?: number | null
+          proxima_inspecao?: string | null
+          qr_code?: string | null
+          status?: Database["public"]["Enums"]["valve_status"] | null
+          tag?: string
+          temperatura_operacao?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "valvulas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "valvulas_planta_id_fkey"
+            columns: ["planta_id"]
+            isOneToOne: false
+            referencedRelation: "plantas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_qr_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      get_current_user_empresa: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      get_current_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: Database["public"]["Enums"]["user_role"]
+      }
     }
     Enums: {
-      [_ in never]: never
+      service_status:
+        | "pendente"
+        | "em_andamento"
+        | "aguardando_aprovacao"
+        | "aprovado"
+        | "rejeitado"
+      user_role: "admin" | "tecnico" | "escritorio" | "cliente"
+      valve_status: "ativa" | "inativa" | "manutencao"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +504,16 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      service_status: [
+        "pendente",
+        "em_andamento",
+        "aguardando_aprovacao",
+        "aprovado",
+        "rejeitado",
+      ],
+      user_role: ["admin", "tecnico", "escritorio", "cliente"],
+      valve_status: ["ativa", "inativa", "manutencao"],
+    },
   },
 } as const
