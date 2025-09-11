@@ -1,126 +1,220 @@
-import { useEffect, useMemo, useState } from "react";
-import type { Valvula } from "../types/db";
-import { listValvulas, deleteValvula } from "../services/valvulasService";
-import { NovaValvulaDialog } from "../components/NovaValvulaDialog";
+-- Expandir tabela de válvulas com campos técnicos detalhados
+ALTER TABLE public.valvulas 
+ADD COLUMN IF NOT EXISTS numero_job_reparo text,
+ADD COLUMN IF NOT EXISTS numero_proposta text,
+ADD COLUMN IF NOT EXISTS selo_asme boolean DEFAULT false,
+ADD COLUMN IF NOT EXISTS simbolo_nb text,
+ADD COLUMN IF NOT EXISTS metodo_teste text,
+ADD COLUMN IF NOT EXISTS tamanho text,
+ADD COLUMN IF NOT EXISTS tipo_valvula text, -- convencional/balanceada
+ADD COLUMN IF NOT EXISTS capacidade numeric,
+ADD COLUMN IF NOT EXISTS cdtp numeric,
+ADD COLUMN IF NOT EXISTS contra_pressao numeric,
+ADD COLUMN IF NOT EXISTS temp_operacao_min numeric,
+ADD COLUMN IF NOT EXISTS temp_operacao_max numeric,
+ADD COLUMN IF NOT EXISTS identificacao_reparo_anterior text,
+ADD COLUMN IF NOT EXISTS equipamento_protegido text,
+ADD COLUMN IF NOT EXISTS local_instalacao_psv text,
+ADD COLUMN IF NOT EXISTS diam_entrada numeric,
+ADD COLUMN IF NOT EXISTS diam_saida numeric,
+ADD COLUMN IF NOT EXISTS pressao_abertura_recebimento numeric,
+ADD COLUMN IF NOT EXISTS desmontada_ultima_inspecao boolean,
+ADD COLUMN IF NOT EXISTS meio_teste text,
+ADD COLUMN IF NOT EXISTS bancada_teste text,
+ADD COLUMN IF NOT EXISTS altura_parafuso_regulagem numeric,
+ADD COLUMN IF NOT EXISTS posicao_anel_inferior text,
+ADD COLUMN IF NOT EXISTS posicao_anel_superior text,
+ADD COLUMN IF NOT EXISTS manometro text;
 
-export default function ValvulasManagement() {
-  const [rows, setRows] = useState<Valvula[]>([]);
-  const [q, setQ] = useState("");
-  const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
+-- Criar tabela para inspeções
+CREATE TABLE IF NOT EXISTS public.inspecoes (
+  id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  valvula_id uuid REFERENCES public.valvulas(id) ON DELETE CASCADE,
+  ordem_servico_id uuid REFERENCES public.ordens_servico(id) ON DELETE CASCADE,
+  tecnico_id uuid REFERENCES public.profiles(id),
+  tipo_inspecao text NOT NULL, -- recebimento, periodica, extraordinaria, visual_externa
+  data_inicio timestamp with time zone DEFAULT now(),
+  data_conclusao timestamp with time zone,
+  termino_em timestamp with time zone,
+  observacoes text,
+  instrumentos_utilizados text,
+  pressao_abertura_frio_cdtp numeric,
+  fluido_teste text,
+  codigo_lacre text,
+  teste_integridade_juntas boolean,
+  teste_estanqueidade boolean,
+  selo_vr boolean DEFAULT false,
+  resultado_aprovado boolean,
+  resultado_reprovado boolean,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now()
+);
 
-  const fetchData = async (search?: string) => {
-    setLoading(true);
-    try {
-      const data = await listValvulas(search);
-      setRows(data);
-    } catch (e) {
-      console.error(e);
-      alert("Erro ao carregar válvulas");
-    } finally {
-      setLoading(false);
-    }
-  };
+-- Criar tabela para componentes da inspeção
+CREATE TABLE IF NOT EXISTS public.inspecao_componentes (
+  id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  inspecao_id uuid REFERENCES public.inspecoes(id) ON DELETE CASCADE,
+  componente text NOT NULL, -- corpo, aro, castelo, bocal, fole, etc.
+  condicao text, -- bom, regular, ruim, na
+  codigo_condicao text, -- A-corrido, B-faltando, C-danificado, etc.
+  observacao text,
+  novo_codigo_material text,
+  nova_corrida text,
+  age text,
+  created_at timestamp with time zone DEFAULT now()
+);
 
-  useEffect(() => { fetchData(); }, []);
+-- Criar tabela para fotos das inspeções
+CREATE TABLE IF NOT EXISTS public.inspecao_fotos (
+  id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  inspecao_id uuid REFERENCES public.inspecoes(id) ON DELETE CASCADE,
+  etapa text NOT NULL, -- chegada, desmontada, disco, bocal, castelo, finalizada, lacre
+  nome_arquivo text NOT NULL,
+  url_foto text NOT NULL,
+  descricao text,
+  ordem integer DEFAULT 1,
+  created_at timestamp with time zone DEFAULT now()
+);
 
-  const count = useMemo(() => rows.length, [rows]);
+-- Criar tabela para ações requeridas
+CREATE TABLE IF NOT EXISTS public.acoes_requeridas (
+  id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  inspecao_id uuid REFERENCES public.inspecoes(id) ON DELETE CASCADE,
+  acao text NOT NULL, -- limpeza, lapidacao, jato_pintura, manter, retirada, desmontagem_inspecao, limpeza_lapidacao, reparo, calibracao, montagem
+  executada boolean DEFAULT false,
+  observacao text,
+  created_at timestamp with time zone DEFAULT now()
+);
 
-  const onSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await fetchData(q);
-  };
+-- Habilitar RLS
+ALTER TABLE public.inspecoes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.inspecao_componentes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.inspecao_fotos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.acoes_requeridas ENABLE ROW LEVEL SECURITY;
 
-  const onDelete = async (id: string) => {
-    if (!confirm("Remover esta válvula?")) return;
-    await deleteValvula(id);
-    await fetchData(q);
-  };
+-- Políticas RLS para inspeções
+CREATE POLICY "Tecnicos e escritorio podem gerenciar inspecoes"
+ON public.inspecoes
+FOR ALL
+USING (get_current_user_role() = ANY(ARRAY['admin'::user_role, 'tecnico'::user_role, 'escritorio'::user_role]));
 
-  return (
-    <div className="mx-auto max-w-6xl p-4">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Gestão de Válvulas</h1>
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="rounded-xl bg-black px-4 py-2 font-medium text-white"
-        >
-          + Nova Válvula
-        </button>
-      </div>
+CREATE POLICY "Usuarios podem ver inspecoes de suas valvulas"
+ON public.inspecoes
+FOR SELECT
+USING (
+  get_current_user_role() = 'admin'::user_role OR
+  EXISTS (
+    SELECT 1 FROM valvulas v 
+    WHERE v.id = inspecoes.valvula_id 
+    AND v.empresa_id = get_current_user_empresa()
+  )
+);
 
-      <form onSubmit={onSearch} className="mb-4">
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Buscar por TAG, fabricante, modelo ou nº de série…"
-          className="w-full rounded-xl border p-3"
-        />
-      </form>
+-- Políticas RLS para componentes
+CREATE POLICY "Tecnicos e escritorio podem gerenciar componentes"
+ON public.inspecao_componentes
+FOR ALL
+USING (get_current_user_role() = ANY(ARRAY['admin'::user_role, 'tecnico'::user_role, 'escritorio'::user_role]));
 
-      <div className="overflow-x-auto rounded-xl border">
-        <table className="min-w-full text-sm">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-4 py-3 text-left">TAG</th>
-              <th className="px-4 py-3 text-left">Fabricante</th>
-              <th className="px-4 py-3 text-left">Modelo</th>
-              <th className="px-4 py-3 text-left">Nº Série</th>
-              <th className="px-4 py-3 text-left">Status</th>
-              <th className="px-4 py-3 text-left">Localização</th>
-              <th className="px-4 py-3 text-left">Próxima Inspeção</th>
-              <th className="px-4 py-3 text-left">Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td className="px-4 py-6" colSpan={8}>Carregando…</td></tr>
-            ) : rows.length === 0 ? (
-              <tr><td className="px-4 py-6" colSpan={8}>Nenhuma válvula encontrada.</td></tr>
-            ) : (
-              rows.map((v) => (
-                <tr key={v.id} className="border-t">
-                  <td className="px-4 py-3 font-medium">{v.tag}</td>
-                  <td className="px-4 py-3">{v.fabricante ?? "-"}</td>
-                  <td className="px-4 py-3">{v.modelo ?? "-"}</td>
-                  <td className="px-4 py-3">{v.numero_serie ?? "-"}</td>
-                  <td className="px-4 py-3">{v.status ?? "-"}</td>
-                  <td className="px-4 py-3">{v.localizacao ?? "-"}</td>
-                  <td className="px-4 py-3">
-                    {v.proxima_inspecao
-                      ? new Date(v.proxima_inspecao).toLocaleDateString()
-                      : "-"}
-                  </td>
-                  <td className="px-4 py-3">
-                    <button
-                      onClick={() => onDelete(v.id)}
-                      className="rounded-lg border px-3 py-1"
-                    >
-                      Remover
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-          {count > 0 && (
-            <tfoot>
-              <tr>
-                <td className="px-4 py-3 text-sm text-gray-500" colSpan={8}>
-                  {count} item(s)
-                </td>
-              </tr>
-            </tfoot>
-          )}
-        </table>
-      </div>
+CREATE POLICY "Usuarios podem ver componentes de suas inspecoes"
+ON public.inspecao_componentes
+FOR SELECT
+USING (
+  get_current_user_role() = 'admin'::user_role OR
+  EXISTS (
+    SELECT 1 FROM inspecoes i 
+    JOIN valvulas v ON v.id = i.valvula_id
+    WHERE i.id = inspecao_componentes.inspecao_id 
+    AND v.empresa_id = get_current_user_empresa()
+  )
+);
 
-      <NovaValvulaDialog
-        open={open}
-        onClose={() => setOpen(false)}
-        onCreated={() => fetchData(q)}
-      />
-    </div>
-  );
-}
+-- Políticas RLS para fotos
+CREATE POLICY "Tecnicos e escritorio podem gerenciar fotos"
+ON public.inspecao_fotos
+FOR ALL
+USING (get_current_user_role() = ANY(ARRAY['admin'::user_role, 'tecnico'::user_role, 'escritorio'::user_role]));
+
+CREATE POLICY "Usuarios podem ver fotos de suas inspecoes"
+ON public.inspecao_fotos
+FOR SELECT
+USING (
+  get_current_user_role() = 'admin'::user_role OR
+  EXISTS (
+    SELECT 1 FROM inspecoes i 
+    JOIN valvulas v ON v.id = i.valvula_id
+    WHERE i.id = inspecao_fotos.inspecao_id 
+    AND v.empresa_id = get_current_user_empresa()
+  )
+);
+
+-- Políticas RLS para ações
+CREATE POLICY "Tecnicos e escritorio podem gerenciar acoes"
+ON public.acoes_requeridas
+FOR ALL
+USING (get_current_user_role() = ANY(ARRAY['admin'::user_role, 'tecnico'::user_role, 'escritorio'::user_role]));
+
+CREATE POLICY "Usuarios podem ver acoes de suas inspecoes"
+ON public.acoes_requeridas
+FOR SELECT
+USING (
+  get_current_user_role() = 'admin'::user_role OR
+  EXISTS (
+    SELECT 1 FROM inspecoes i 
+    JOIN valvulas v ON v.id = i.valvula_id
+    WHERE i.id = acoes_requeridas.inspecao_id 
+    AND v.empresa_id = get_current_user_empresa()
+  )
+);
+
+-- Criar triggers para updated_at
+CREATE TRIGGER update_inspecoes_updated_at
+  BEFORE UPDATE ON public.inspecoes
+  FOR EACH ROW
+  EXECUTE FUNCTION public.update_updated_at_column();
+
+-- Criar buckets de storage para fotos
+INSERT INTO storage.buckets (id, name, public) 
+VALUES ('inspecao-fotos', 'inspecao-fotos', false)
+ON CONFLICT (id) DO NOTHING;
+
+-- Políticas de storage para fotos de inspeção
+CREATE POLICY "Tecnicos podem upload fotos inspecao"
+ON storage.objects
+FOR INSERT
+WITH CHECK (
+  bucket_id = 'inspecao-fotos' AND
+  get_current_user_role() = ANY(ARRAY['admin'::user_role, 'tecnico'::user_role, 'escritorio'::user_role])
+);
+
+CREATE POLICY "Usuarios podem ver fotos de suas empresas"
+ON storage.objects
+FOR SELECT
+USING (
+  bucket_id = 'inspecao-fotos' AND (
+    get_current_user_role() = 'admin'::user_role OR
+    -- Verificar se a foto pertence a uma inspeção da empresa do usuário  
+    (storage.foldername(name))[1] IN (
+      SELECT i.id::text
+      FROM inspecoes i
+      JOIN valvulas v ON v.id = i.valvula_id
+      WHERE v.empresa_id = get_current_user_empresa()
+    )
+  )
+);
+
+CREATE POLICY "Tecnicos podem atualizar fotos inspecao"
+ON storage.objects
+FOR UPDATE
+USING (
+  bucket_id = 'inspecao-fotos' AND
+  get_current_user_role() = ANY(ARRAY['admin'::user_role, 'tecnico'::user_role, 'escritorio'::user_role])
+);
+
+CREATE POLICY "Tecnicos podem deletar fotos inspecao"
+ON storage.objects
+FOR DELETE
+USING (
+  bucket_id = 'inspecao-fotos' AND
+  get_current_user_role() = ANY(ARRAY['admin'::user_role, 'tecnico'::user_role, 'escritorio'::user_role])
+);
