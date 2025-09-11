@@ -2,8 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import type { Valvula } from "@/types/db";
 import { listValvulas, deleteValvula } from "@/services/valvulasService";
 import { NovaValvulaDialog } from "@/components/NovaValvulaDialog";
+import { useNavigate } from "react-router-dom";
+
 
 export default function ValvulasManagement() {
+  const navigate = useNavigate();
   const [rows, setRows] = useState<Valvula[]>([]);
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
@@ -49,6 +52,28 @@ export default function ValvulasManagement() {
           + Nova Válvula
         </button>
       </div>
+
+      <div className="mb-6 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => navigate("/dashboard")}
+            className="rounded-xl border px-4 py-2"
+          >
+          ← Voltar
+        </button>
+        <h1 className="text-3xl font-bold">Gestão de Válvulas</h1>
+      </div>
+
+  <button
+    type="button"
+    onClick={() => setOpen(true)}
+    className="rounded-xl bg-black px-4 py-2 font-medium text-white"
+  >
+    + Nova Válvula
+  </button>
+</div>
+
 
       <form onSubmit={onSearch} className="mb-4">
         <input
