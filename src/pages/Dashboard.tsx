@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { LogOut, Settings, User, Building2, Wrench, FileCheck, AlertTriangle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Dashboard = () => {
   const { profile, signOut } = useAuth();
@@ -162,8 +163,14 @@ const Dashboard = () => {
                 </>
               )}
               
-              {(profile?.role === 'tecnico' || profile?.role === 'escritorio') && (
+              {(profile?.role === 'tecnico' || profile?.role === 'escritorio' || profile?.role === 'admin') && (
                 <>
+                  <Button asChild className="w-full justify-start" variant="outline">
+                    <Link to="/valvulas">
+                      <Wrench className="mr-2 h-4 w-4" />
+                      Gestão de Válvulas
+                    </Link>
+                  </Button>
                   <Button className="w-full justify-start" variant="outline">
                     <Wrench className="mr-2 h-4 w-4" />
                     Nova Ordem de Serviço
@@ -207,9 +214,9 @@ const Dashboard = () => {
                 </div>
                 
                 <div className="text-sm">
-                  <p className="font-medium text-muted-foreground">⏳ Fase 2 - Gestão de Válvulas</p>
+                  <p className="font-medium text-green-600">✅ Fase 2 - Gestão de Válvulas</p>
                   <p className="text-muted-foreground ml-4">
-                    CRUD de válvulas e ordens de serviço
+                    CRUD completo de válvulas com upload de fotos por etapa
                   </p>
                 </div>
                 
