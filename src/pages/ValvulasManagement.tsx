@@ -43,16 +43,16 @@ export default function ValvulasManagement() {
   return (
 
       <div className="mb-6 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => navigate("/dashboard")}
-            className="rounded-xl border px-4 py-2"
-          >
-          ← Voltar
-        </button>
-        <h1 className="text-3xl font-bold">Gestão de Válvulas</h1>
-      </div>
+  <div className="flex items-center gap-3">
+    <button
+      type="button"
+      onClick={() => navigate("/dashboard")}
+      className="rounded-xl border px-4 py-2"
+    >
+      ← Voltar
+    </button>
+    <h1 className="text-3xl font-bold">Gestão de Válvulas</h1>
+  </div>
 
   <button
     type="button"
@@ -62,6 +62,7 @@ export default function ValvulasManagement() {
     + Nova Válvula
   </button>
 </div>
+
 
 
       <form onSubmit={onSearch} className="mb-4">
