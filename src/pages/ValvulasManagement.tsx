@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import type { Valvula } from "../types/db";
-import { listValvulas, deleteValvula } from "../services/valvulasService";
-import { NovaValvulaDialog } from "../components/NovaValvulaDialog";
+import type { Valvula } from "@/types/db";
+import { listValvulas, deleteValvula } from "@/services/valvulasService";
+import { NovaValvulaDialog } from "@/components/NovaValvulaDialog";
 
 export default function ValvulasManagement() {
   const [rows, setRows] = useState<Valvula[]>([]);
