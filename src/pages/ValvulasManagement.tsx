@@ -109,4 +109,45 @@ export default function ValvulasManagement() {
                 <tr key={v.id} className="border-t">
                   <td className="px-4 py-3 font-medium">{v.tag}</td>
                   <td className="px-4 py-3">{v.fabricante ?? "-"}</td>
-                  <td className="px-4 p
+                  <td className="px-4 py-3">{v.modelo ?? "-"}</td>
+                  <td className="px-4 py-3">{v.numero_serie ?? "-"}</td>
+                  <td className="px-4 py-3">{v.status ?? "-"}</td>
+                  <td className="px-4 py-3">{v.localizacao ?? "-"}</td>
+                  <td className="px-4 py-3">
+                    {v.proxima_inspecao
+                      ? new Date(v.proxima_inspecao).toLocaleDateString()
+                      : "-"}
+                  </td>
+                  <td className="px-4 py-3">
+                    <button
+                      onClick={() => onDelete(v.id)}
+                      className="rounded-lg border px-3 py-1"
+                    >
+                      Remover
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+          {count > 0 && (
+            <tfoot>
+              <tr>
+                <td className="px-4 py-3 text-sm text-gray-500" colSpan={8}>
+                  {count} item(s)
+                </td>
+              </tr>
+            </tfoot>
+          )}
+        </table>
+      </div>
+
+      {/* modal */}
+      <NovaValvulaDialog
+        open={open}
+        onClose={() => setOpen(false)}
+        onCreated={() => fetchData(q)}
+      />
+    </div>
+  );
+}
