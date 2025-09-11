@@ -41,17 +41,6 @@ export default function ValvulasManagement() {
   };
 
   return (
-    <div className="mx-auto max-w-6xl p-4">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Gestão de Válvulas</h1>
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="rounded-xl bg-black px-4 py-2 font-medium text-white"
-        >
-          + Nova Válvula
-        </button>
-      </div>
 
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
