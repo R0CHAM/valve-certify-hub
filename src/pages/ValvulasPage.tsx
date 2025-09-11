@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
-import type { Valvula } from '../types/db';
-import { listValvulas, deleteValvula } from '../services/valvulasService';
-import { NovaValvulaDialog } from '../components/NovaValvulaDialog';
+import { useEffect, useMemo, useState } from "react";
+import type { Valvula } from "../types/db";
+import { listValvulas, deleteValvula } from "../services/valvulasService";
+import { NovaValvulaDialog } from "../components/NovaValvulaDialog";
 
 export default function ValvulasPage() {
   const [rows, setRows] = useState<Valvula[]>([]);
-  const [q, setQ] = useState('');
+  const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -14,14 +14,18 @@ export default function ValvulasPage() {
     try {
       const data = await listValvulas(search);
       setRows(data);
-    } catch (e: any) {
-      alert(e?.message ?? 'Erro ao carregar');
+    } catch (e) {
+      console.error(e);
+      alert("Erro ao carregar válvulas");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData();
+  }, []);
+
   const count = useMemo(() => rows.length, [rows]);
 
   const onSearch = async (e: React.FormEvent) => {
@@ -30,7 +34,7 @@ export default function ValvulasPage() {
   };
 
   const onDelete = async (id: string) => {
-    if (!confirm('Remover esta válvula?')) return;
+    if (!confirm("Remover esta válvula?")) return;
     await deleteValvula(id);
     await fetchData(q);
   };
@@ -39,7 +43,15 @@ export default function ValvulasPage() {
     <div className="mx-auto max-w-6xl p-4">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-3xl font-bold">Gestão de Válvulas</h1>
-        <button onClick={() => setOpen(true)} className="rounded-xl bg-black px-4 py-2 font-medium text-white">
+
+        <button
+          type="button"
+          onClick={() => {
+            console.log("abrindo modal de nova válvula");
+            setOpen(true);
+          }}
+          className="rounded-xl bg-black px-4 py-2 font-medium text-white"
+        >
           + Nova Válvula
         </button>
       </div>
@@ -48,7 +60,7 @@ export default function ValvulasPage() {
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Buscar por TAG, fabricante, modelo ou nº de série…"
+          placeholder="Buscar por TAG, fabricante ou modelo…"
           className="w-full rounded-xl border p-3"
         />
       </form>
@@ -73,19 +85,24 @@ export default function ValvulasPage() {
             ) : rows.length === 0 ? (
               <tr><td className="px-4 py-6" colSpan={8}>Nenhuma válvula encontrada.</td></tr>
             ) : (
-              rows.map(v => (
+              rows.map((v) => (
                 <tr key={v.id} className="border-t">
                   <td className="px-4 py-3 font-medium">{v.tag}</td>
-                  <td className="px-4 py-3">{v.fabricante ?? '-'}</td>
-                  <td className="px-4 py-3">{v.modelo ?? '-'}</td>
-                  <td className="px-4 py-3">{v.numero_serie ?? '-'}</td>
-                  <td className="px-4 py-3">{v.status ?? '-'}</td>
-                  <td className="px-4 py-3">{v.localizacao ?? '-'}</td>
+                  <td className="px-4 py-3">{v.fabricante ?? "-"}</td>
+                  <td className="px-4 py-3">{v.modelo ?? "-"}</td>
+                  <td className="px-4 py-3">{v.numero_serie ?? "-"}</td>
+                  <td className="px-4 py-3">{v.status ?? "-"}</td>
+                  <td className="px-4 py-3">{v.localizacao ?? "-"}</td>
                   <td className="px-4 py-3">
-                    {v.proxima_inspecao ? new Date(v.proxima_inspecao).toLocaleDateString() : '-'}
+                    {v.proxima_inspecao
+                      ? new Date(v.proxima_inspecao).toLocaleDateString()
+                      : "-"}
                   </td>
                   <td className="px-4 py-3">
-                    <button onClick={() => onDelete(v.id)} className="rounded-lg border px-3 py-1">
+                    <button
+                      onClick={() => onDelete(v.id)}
+                      className="rounded-lg border px-3 py-1"
+                    >
                       Remover
                     </button>
                   </td>
@@ -105,6 +122,7 @@ export default function ValvulasPage() {
         </table>
       </div>
 
+      {/* MODAL: precisa estar montado aqui */}
       <NovaValvulaDialog
         open={open}
         onClose={() => setOpen(false)}
@@ -113,3 +131,4 @@ export default function ValvulasPage() {
     </div>
   );
 }
+
