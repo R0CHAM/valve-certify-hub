@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Save, Camera, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -318,9 +317,9 @@ export function InspectionForm({ valve, onClose }: InspectionFormProps) {
             </Card>
           )}
 
-          {currentStep > 0 && currentStep <= INSPECTION_STEPS.length && (
+          {currentStep > 0 && currentStep <= INSPECTION_STEPS.length && inspectionId && (
             <PhotoUpload 
-              inspectionId={inspectionId!}
+              inspectionId={inspectionId}
               step={INSPECTION_STEPS[currentStep - 1]}
             />
           )}
