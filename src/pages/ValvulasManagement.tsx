@@ -182,7 +182,7 @@ export default function ValvulasManagement() {
                     <div><strong>Próxima Inspeção:</strong> {valvula.proxima_inspecao ? new Date(valvula.proxima_inspecao).toLocaleDateString() : 'N/A'}</div>
                     <div><strong>QR Code:</strong> {valvula.qr_code}</div>
                   </div>
-                  <div className="flex gap-2 mt-4">
+                  <div className="flex flex-wrap gap-2 mt-4">
                     <Button 
                       variant="outline" 
                       size="sm"

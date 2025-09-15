@@ -22,26 +22,17 @@ export function ValveDetails({ valve, onClose }: ValveDetailsProps) {
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <div className="flex justify-between items-start">
-            <div>
-              <DialogTitle className="text-2xl">{valve.tag}</DialogTitle>
-              <div className="flex gap-2 mt-2">
-                <Badge className={`${getStatusColor(valve.status)} text-white`}>
-                  {valve.status}
-                </Badge>
-                {valve.selo_asme && (
-                  <Badge variant="outline">ASME</Badge>
-                )}
-                {valve.selo_vr && (
-                  <Badge variant="outline">VR</Badge>
-                )}
-              </div>
-            </div>
-            <DialogClose asChild>
-              <button className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100">
-                <X className="h-4 w-4" />
-              </button>
-            </DialogClose>
+          <DialogTitle className="text-2xl">{valve.tag}</DialogTitle>
+          <div className="flex gap-2 mt-2">
+            <Badge className={`${getStatusColor(valve.status)} text-white`}>
+              {valve.status}
+            </Badge>
+            {valve.selo_asme && (
+              <Badge variant="outline">ASME</Badge>
+            )}
+            {valve.selo_vr && (
+              <Badge variant="outline">VR</Badge>
+            )}
           </div>
         </DialogHeader>
 

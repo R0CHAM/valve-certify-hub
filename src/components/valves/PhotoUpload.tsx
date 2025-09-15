@@ -15,6 +15,7 @@ interface PhotoUploadProps {
     name: string;
     description: string;
   };
+  inspectionType?: string;
 }
 
 interface Photo {
@@ -25,6 +26,14 @@ interface Photo {
 }
 
 const STEP_GUIDELINES = {
+  tipo: {
+    title: "Tipo de Inspeção",
+    instructions: [
+      "Definir se é registro ou testes",
+      "Selecionar tipo de teste se aplicável",
+      "Escolher componentes do teste"
+    ]
+  },
   chegada: {
     title: "Fotos da Válvula na Chegada",
     instructions: [
@@ -49,6 +58,7 @@ const STEP_GUIDELINES = {
       "Vista frontal do disco",
       "Vista lateral do disco", 
       "Sede do disco",
+      "O-rings e vedações internas",
       "Eventuais desgastes ou danos"
     ]
   },
@@ -64,19 +74,19 @@ const STEP_GUIDELINES = {
   castelo: {
     title: "Fotos do Castelo",
     instructions: [
-      "Vista externa do castelo",
-      "Vista interna do castelo",
-      "Componentes do castelo",
-      "Estado das vedações"
+      "Vista do castelo",
+      "Vista do capuz e alavanca (se aplicável)",
+      "Vista das roscas",
+      "Vista dos flanges",
+      "Pontos de oxidação externos (se aplicável)"
     ]
   },
   finalizada: {
     title: "Fotos da Válvula Finalizada",
     instructions: [
       "Válvula montada completa",
-      "Vista geral final", 
-      "Identificação aplicada",
-      "Estado final da válvula"
+      "Plaqueta de identificação",
+      "Lacre aplicado"
     ]
   },
   lacre: {
@@ -90,7 +100,7 @@ const STEP_GUIDELINES = {
   }
 };
 
-export function PhotoUpload({ inspectionId, step }: PhotoUploadProps) {
+export function PhotoUpload({ inspectionId, step, inspectionType = "registro" }: PhotoUploadProps) {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
@@ -258,19 +268,33 @@ export function PhotoUpload({ inspectionId, step }: PhotoUploadProps) {
         >
           <Camera className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <div className="space-y-2">
-            <p className="text-lg font-medium">Adicionar Fotos</p>
-            <p className="text-sm text-muted-foreground">
-              Arraste e solte as fotos aqui ou clique para selecionar
+            <p className="text-lg font-medium">
+              {inspectionType === "testes" ? "Adicionar Fotos/Vídeos" : "Adicionar Fotos"}
             </p>
+            <p className="text-sm text-muted-foreground">
+              Arraste e solte {inspectionType === "testes" ? "os arquivos" : "as fotos"} aqui ou clique para selecionar
+            </p>
+            {inspectionType === "testes" && (
+              <div className="grid grid-cols-2 gap-2 max-w-sm mx-auto mt-4">
+                <div className="bg-blue-50 border border-blue-200 rounded p-2">
+                  <Camera className="h-6 w-6 mx-auto mb-1 text-blue-600" />
+                  <span className="text-xs text-blue-700">Fotos</span>
+                </div>
+                <div className="bg-green-50 border border-green-200 rounded p-2">
+                  <div className="h-6 w-6 mx-auto mb-1 flex items-center justify-center text-green-600 text-lg">🎥</div>
+                  <span className="text-xs text-green-700">Vídeos</span>
+                </div>
+              </div>
+            )}
             <p className="text-xs text-blue-600 font-medium">
-              💡 Siga as orientações acima para garantir fotos de qualidade
+              💡 Siga as orientações acima para garantir {inspectionType === "testes" ? "documentação" : "fotos"} de qualidade
             </p>
           </div>
           <div className="mt-4">
             <Input
               type="file"
               multiple
-              accept="image/*"
+              accept={inspectionType === "testes" ? "image/*,video/*" : "image/*"}
               onChange={handleFileSelect}
               className="hidden"
               id="photo-upload"
@@ -282,7 +306,7 @@ export function PhotoUpload({ inspectionId, step }: PhotoUploadProps) {
                 ) : (
                   <>
                     <Upload className="h-4 w-4 mr-2" />
-                    Selecionar Fotos
+                    Selecionar {inspectionType === "testes" ? "Arquivos" : "Fotos"}
                   </>
                 )}
               </Button>

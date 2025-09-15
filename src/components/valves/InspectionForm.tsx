@@ -20,6 +20,7 @@ interface InspectionFormProps {
 }
 
 const INSPECTION_STEPS = [
+  { id: "tipo", name: "Tipo", description: "Tipo de inspeção" },
   { id: "chegada", name: "Chegada", description: "Válvula na chegada" },
   { id: "desmontada", name: "Desmontada", description: "Válvula desmontada" },
   { id: "disco", name: "Disco", description: "Inspeção do disco" },
@@ -59,7 +60,10 @@ export function InspectionForm({ valve, onClose }: InspectionFormProps) {
     teste_integridade_juntas: false,
     teste_estanqueidade: false,
     selo_vr: false,
-    bpm_estanqueidade: ""
+    bmp_estanqueidade: "",
+    inspection_type: "registro", // registro ou testes
+    test_type: "", // teste_recebimento, teste_intermediario, teste_final
+    test_components: [] // array dos testes selecionados
   });
   const [components, setComponents] = useState<any[]>([]);
   const [actions, setActions] = useState<string[]>([]);
@@ -165,7 +169,7 @@ export function InspectionForm({ valve, onClose }: InspectionFormProps) {
   };
 
   const handleNext = async () => {
-    if (currentStep === 0) {
+    if (currentStep === 1) {
       const newInspectionId = await createInspection();
       if (!newInspectionId) return;
     }
@@ -216,22 +220,107 @@ export function InspectionForm({ valve, onClose }: InspectionFormProps) {
 
         <div className="space-y-6">
           {/* Progress */}
-          <div className="flex items-center gap-2 mb-6">
-            {INSPECTION_STEPS.map((step, index) => (
-              <div key={step.id} className="flex items-center">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                  index <= currentStep ? 'bg-primary text-primary-foreground' : 'bg-muted'
-                }`}>
-                  {index < currentStep ? '✓' : index + 1}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              {INSPECTION_STEPS.map((step, index) => (
+                <div key={step.id} className="flex items-center">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                    index <= currentStep ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                  }`}>
+                    {index < currentStep ? '✓' : index + 1}
+                  </div>
+                  {index < INSPECTION_STEPS.length - 1 && (
+                    <div className={`h-0.5 w-8 ${index < currentStep ? 'bg-primary' : 'bg-muted'}`} />
+                  )}
                 </div>
-                {index < INSPECTION_STEPS.length - 1 && (
-                  <div className={`h-0.5 w-8 ${index < currentStep ? 'bg-primary' : 'bg-muted'}`} />
-                )}
-              </div>
-            ))}
+              ))}
+            </div>
+            <div className="text-sm text-muted-foreground">
+              Etapa {currentStep + 1} de {INSPECTION_STEPS.length}
+            </div>
           </div>
 
           {currentStep === 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Tipo de Inspeção</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>Esta inspeção se refere a:</Label>
+                  <div className="grid grid-cols-2 gap-4 mt-2">
+                    <Card 
+                      className={`cursor-pointer border-2 ${formData.inspection_type === 'registro' ? 'border-primary' : 'border-muted'}`}
+                      onClick={() => setFormData({...formData, inspection_type: 'registro'})}
+                    >
+                      <CardContent className="p-4 text-center">
+                        <h4 className="font-medium">Registro de Inspeção</h4>
+                        <p className="text-sm text-muted-foreground">Documentação e fotos</p>
+                      </CardContent>
+                    </Card>
+                    <Card 
+                      className={`cursor-pointer border-2 ${formData.inspection_type === 'testes' ? 'border-primary' : 'border-muted'}`}
+                      onClick={() => setFormData({...formData, inspection_type: 'testes'})}
+                    >
+                      <CardContent className="p-4 text-center">
+                        <h4 className="font-medium">Testes</h4>
+                        <p className="text-sm text-muted-foreground">Fotos e vídeos dos testes</p>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+
+                {formData.inspection_type === 'testes' && (
+                  <div>
+                    <Label>Tipo de Teste</Label>
+                    <Select 
+                      value={formData.test_type} 
+                      onValueChange={(value) => setFormData({...formData, test_type: value})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o tipo de teste" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="teste_recebimento">Teste de Recebimento</SelectItem>
+                        <SelectItem value="teste_intermediario">Teste Intermediário</SelectItem>
+                        <SelectItem value="teste_final">Teste Final</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    {formData.test_type && (
+                      <div className="mt-4">
+                        <Label>Componentes do Teste</Label>
+                        <div className="flex gap-4 mt-2">
+                          {['pressao_abertura', 'estanqueidade', 'contrapressao'].map(component => (
+                            <div key={component} className="flex items-center space-x-2">
+                              <Checkbox 
+                                id={component}
+                                checked={formData.test_components.includes(component)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    setFormData({...formData, test_components: [...formData.test_components, component]});
+                                  } else {
+                                    setFormData({...formData, test_components: formData.test_components.filter(c => c !== component)});
+                                  }
+                                }}
+                              />
+                              <Label htmlFor={component}>
+                                {component === 'pressao_abertura' && 'Pressão de Abertura'}
+                                {component === 'estanqueidade' && 'Estanqueidade'}
+                                {component === 'contrapressao' && 'Contrapressão'}
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {currentStep === 1 && (
             <Card>
               <CardHeader>
                 <CardTitle>Informações da Inspeção</CardTitle>
@@ -305,13 +394,13 @@ export function InspectionForm({ valve, onClose }: InspectionFormProps) {
                     />
                     <Label htmlFor="teste_estanqueidade">Teste Estanqueidade</Label>
                   </div>
-                  {formData.teste_estanqueidade && (
+                   {formData.teste_estanqueidade && (
                     <div className="ml-6">
                       <Label>BPM (Bolhas por Minuto)</Label>
                       <Input 
                         type="number"
-                        value={formData.bpm_estanqueidade}
-                        onChange={(e) => setFormData({...formData, bpm_estanqueidade: e.target.value})}
+                        value={formData.bmp_estanqueidade}
+                        onChange={(e) => setFormData({...formData, bmp_estanqueidade: e.target.value})}
                         placeholder="Ex: 5"
                       />
                     </div>
@@ -338,10 +427,11 @@ export function InspectionForm({ valve, onClose }: InspectionFormProps) {
             </Card>
           )}
 
-          {currentStep > 0 && currentStep <= INSPECTION_STEPS.length && inspectionId && (
+          {currentStep > 1 && currentStep <= INSPECTION_STEPS.length && inspectionId && (
             <PhotoUpload 
               inspectionId={inspectionId}
               step={INSPECTION_STEPS[currentStep - 1]}
+              inspectionType={formData.inspection_type}
             />
           )}
 
@@ -458,12 +548,33 @@ export function InspectionForm({ valve, onClose }: InspectionFormProps) {
           )}
 
           <div className="flex justify-between">
-            <Button variant="outline" onClick={onClose}>
-              Cancelar
-            </Button>
-            <Button onClick={handleNext}>
-              {currentStep === INSPECTION_STEPS.length + 1 ? 'Finalizar' : 'Próximo'}
-            </Button>
+            <div>
+              {currentStep > 0 && (
+                <Button 
+                  variant="outline" 
+                  onClick={() => setCurrentStep(currentStep - 1)}
+                >
+                  Voltar
+                </Button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={onClose}>
+                Cancelar
+              </Button>
+              {currentStep < INSPECTION_STEPS.length + 1 && (
+                <Button onClick={handleNext}>
+                  {currentStep === 0 ? 'Começar' : 
+                   currentStep === INSPECTION_STEPS.length ? 'Finalizar Fotos' : 'Próximo'}
+                </Button>
+              )}
+              {currentStep === INSPECTION_STEPS.length + 1 && (
+                <Button onClick={finishInspection}>
+                  <Save className="h-4 w-4 mr-2" />
+                  Finalizar Inspeção
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </DialogContent>
