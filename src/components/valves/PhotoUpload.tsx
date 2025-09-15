@@ -24,10 +24,81 @@ interface Photo {
   description: string;
 }
 
+const STEP_GUIDELINES = {
+  chegada: {
+    title: "Fotos da Válvula na Chegada",
+    instructions: [
+      "Foto geral da válvula completa",
+      "Placa de identificação/nameplate",
+      "Estado geral da válvula",
+      "Eventuais danos visíveis"
+    ]
+  },
+  desmontada: {
+    title: "Fotos da Válvula Desmontada", 
+    instructions: [
+      "Corpo da válvula desmontado",
+      "Vista dos componentes internos",
+      "Estado das roscas",
+      "Componentes separados organizados"
+    ]
+  },
+  disco: {
+    title: "Fotos do Disco",
+    instructions: [
+      "Vista frontal do disco",
+      "Vista lateral do disco", 
+      "Sede do disco",
+      "Eventuais desgastes ou danos"
+    ]
+  },
+  bocal: {
+    title: "Fotos do Bocal",
+    instructions: [
+      "Vista interna do bocal",
+      "Sede do bocal",
+      "Roscas do bocal",
+      "Estado da superfície"
+    ]
+  },
+  castelo: {
+    title: "Fotos do Castelo",
+    instructions: [
+      "Vista externa do castelo",
+      "Vista interna do castelo",
+      "Componentes do castelo",
+      "Estado das vedações"
+    ]
+  },
+  finalizada: {
+    title: "Fotos da Válvula Finalizada",
+    instructions: [
+      "Válvula montada completa",
+      "Vista geral final", 
+      "Identificação aplicada",
+      "Estado final da válvula"
+    ]
+  },
+  lacre: {
+    title: "Fotos do Lacre",
+    instructions: [
+      "Lacre aplicado na válvula",
+      "Código do lacre visível",
+      "Posição do lacre",
+      "Estado do lacre aplicado"
+    ]
+  }
+};
+
 export function PhotoUpload({ inspectionId, step }: PhotoUploadProps) {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+
+  const stepGuideline = STEP_GUIDELINES[step.id as keyof typeof STEP_GUIDELINES] || {
+    title: step.name,
+    instructions: ["Fotos relevantes para esta etapa"]
+  };
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -158,8 +229,19 @@ export function PhotoUpload({ inspectionId, step }: PhotoUploadProps) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Camera className="h-5 w-5" />
-          {step.name} - {step.description}
+          {stepGuideline.title}
         </CardTitle>
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
+          <h4 className="font-medium text-blue-800 mb-2">📋 Orientações para fotos:</h4>
+          <ul className="text-sm text-blue-700 space-y-1">
+            {stepGuideline.instructions.map((instruction, index) => (
+              <li key={index} className="flex items-start gap-2">
+                <span className="text-blue-500">•</span>
+                {instruction}
+              </li>
+            ))}
+          </ul>
+        </div>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Upload Area */}
@@ -179,6 +261,9 @@ export function PhotoUpload({ inspectionId, step }: PhotoUploadProps) {
             <p className="text-lg font-medium">Adicionar Fotos</p>
             <p className="text-sm text-muted-foreground">
               Arraste e solte as fotos aqui ou clique para selecionar
+            </p>
+            <p className="text-xs text-blue-600 font-medium">
+              💡 Siga as orientações acima para garantir fotos de qualidade
             </p>
           </div>
           <div className="mt-4">

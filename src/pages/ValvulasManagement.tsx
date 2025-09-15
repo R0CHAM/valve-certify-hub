@@ -4,12 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Search, Eye, Camera, FileText } from "lucide-react";
+import { Plus, Search, Eye, Camera, FileText, ArrowLeft, Edit } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { ValveDetails } from "@/components/valves/ValveDetails";
 import { InspectionForm } from "@/components/valves/InspectionForm";
+import { ValveForm } from "@/components/valves/ValveForm";
+import { PDFGenerator } from "@/components/valves/PDFGenerator";
 
 interface Valvula {
   id: string;
@@ -45,9 +48,12 @@ export default function ValvulasManagement() {
   const [inspections, setInspections] = useState<Inspection[]>([]);
   const [selectedValve, setSelectedValve] = useState<Valvula | null>(null);
   const [showInspectionForm, setShowInspectionForm] = useState(false);
+  const [showAddValve, setShowAddValve] = useState(false);
+  const [editingValve, setEditingValve] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const { user, profile } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (user) {
@@ -111,15 +117,27 @@ export default function ValvulasManagement() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Gestão de Válvulas</h1>
-          <p className="text-muted-foreground">Gerenciamento de válvulas e inspeções</p>
+        <div className="flex items-center gap-4">
+          <Button variant="outline" onClick={() => navigate('/')}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold">Gestão de Válvulas</h1>
+            <p className="text-muted-foreground">Gerenciamento de válvulas e inspeções</p>
+          </div>
         </div>
         {canManageValves && (
-          <Button onClick={() => setShowInspectionForm(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Nova Inspeção
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowAddValve(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nova Válvula
+            </Button>
+            <Button onClick={() => setShowInspectionForm(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nova Inspeção
+            </Button>
+          </div>
         )}
       </div>
 
@@ -179,6 +197,19 @@ export default function ValvulasManagement() {
                         size="sm"
                         onClick={() => {
                           setSelectedValve(valvula);
+                          setEditingValve(true);
+                        }}
+                      >
+                        <Edit className="h-4 w-4 mr-1" />
+                        Editar
+                      </Button>
+                    )}
+                    {canManageValves && (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          setSelectedValve(valvula);
                           setShowInspectionForm(true);
                         }}
                       >
@@ -220,10 +251,16 @@ export default function ValvulasManagement() {
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm">{inspection.observacoes}</p>
-                    <Button variant="outline" size="sm" className="mt-2">
-                      <FileText className="h-4 w-4 mr-1" />
-                      Ver Relatório
-                    </Button>
+                    <div className="flex gap-2 mt-2">
+                      <Button variant="outline" size="sm">
+                        <FileText className="h-4 w-4 mr-1" />
+                        Ver Relatório
+                      </Button>
+                      <PDFGenerator 
+                        inspectionId={inspection.id}
+                        valveName={valvula?.tag || 'Válvula'}
+                      />
+                    </div>
                   </CardContent>
                 </Card>
               );
@@ -243,7 +280,7 @@ export default function ValvulasManagement() {
         </TabsContent>
       </Tabs>
 
-      {selectedValve && !showInspectionForm && (
+      {selectedValve && !showInspectionForm && !editingValve && (
         <ValveDetails 
           valve={selectedValve} 
           onClose={() => setSelectedValve(null)}
@@ -257,6 +294,23 @@ export default function ValvulasManagement() {
             setShowInspectionForm(false);
             setSelectedValve(null);
             fetchInspections();
+          }}
+        />
+      )}
+
+      {(showAddValve || editingValve) && (
+        <ValveForm 
+          valve={editingValve ? selectedValve : null}
+          onClose={() => {
+            setShowAddValve(false);
+            setEditingValve(false);
+            setSelectedValve(null);
+          }}
+          onSave={() => {
+            fetchValvulas();
+            setShowAddValve(false);
+            setEditingValve(false);
+            setSelectedValve(null);
           }}
         />
       )}

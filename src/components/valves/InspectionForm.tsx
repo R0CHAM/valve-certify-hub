@@ -54,11 +54,12 @@ export function InspectionForm({ valve, onClose }: InspectionFormProps) {
     observacoes: "",
     instrumentos_utilizados: "",
     pressao_abertura_frio_cdtp: "",
-    fluido_teste: "",
+    fluido_teste: "liquido",
     codigo_lacre: "",
     teste_integridade_juntas: false,
     teste_estanqueidade: false,
-    selo_vr: false
+    selo_vr: false,
+    bpm_estanqueidade: ""
   });
   const [components, setComponents] = useState<any[]>([]);
   const [actions, setActions] = useState<string[]>([]);
@@ -260,19 +261,28 @@ export function InspectionForm({ valve, onClose }: InspectionFormProps) {
                     />
                   </div>
                   <div>
-                    <Label>Pressão Abertura Frio CDTP</Label>
+                    <Label>Pressão Abertura Frio CDTP (bar-g)</Label>
                     <Input 
                       type="number"
                       value={formData.pressao_abertura_frio_cdtp}
                       onChange={(e) => setFormData({...formData, pressao_abertura_frio_cdtp: e.target.value})}
+                      placeholder="Ex: 2.5"
                     />
                   </div>
                   <div>
                     <Label>Fluido de Teste</Label>
-                    <Input 
-                      value={formData.fluido_teste}
-                      onChange={(e) => setFormData({...formData, fluido_teste: e.target.value})}
-                    />
+                    <Select 
+                      value={formData.fluido_teste} 
+                      onValueChange={(value) => setFormData({...formData, fluido_teste: value})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="liquido">Líquido</SelectItem>
+                        <SelectItem value="gasoso">Gasoso</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
@@ -295,6 +305,17 @@ export function InspectionForm({ valve, onClose }: InspectionFormProps) {
                     />
                     <Label htmlFor="teste_estanqueidade">Teste Estanqueidade</Label>
                   </div>
+                  {formData.teste_estanqueidade && (
+                    <div className="ml-6">
+                      <Label>BPM (Bolhas por Minuto)</Label>
+                      <Input 
+                        type="number"
+                        value={formData.bpm_estanqueidade}
+                        onChange={(e) => setFormData({...formData, bpm_estanqueidade: e.target.value})}
+                        placeholder="Ex: 5"
+                      />
+                    </div>
+                  )}
                   <div className="flex items-center space-x-2">
                     <Checkbox 
                       id="selo_vr"
