@@ -459,14 +459,24 @@ export function InspectionForm({ valve, onClose, onDelete }: InspectionFormProps
             </Card>
           )}
 
-          {/* Test Flow */}
+          {/* Test Flow - Replace entire inspection flow */}
           {formData.inspection_type === 'testes' && currentStep === 1 && inspectionId && (
-            <TestFlow 
-              valve={valve}
-              inspectionId={inspectionId}
-              onFinish={handleTestFlowFinish}
-              onBack={handlePrevious}
-            />
+            <div className="space-y-6">
+              <TestFlow 
+                valve={valve}
+                inspectionId={inspectionId}
+                testConfig={{
+                  test_type: formData.test_type,
+                  test_components: formData.test_components,
+                  instrumentos_utilizados: formData.instrumentos_utilizados,
+                  pressao_abertura_frio_cdtp: formData.pressao_abertura_frio_cdtp,
+                  fluido_teste: formData.fluido_teste
+                }}
+                onFinish={handleTestFlowFinish}
+                onBack={handlePrevious}
+                onDelete={handleDeleteInspection}
+              />
+            </div>
           )}
 
           {/* Photo Flow for Registry Type */}
@@ -591,19 +601,34 @@ export function InspectionForm({ valve, onClose, onDelete }: InspectionFormProps
             </Tabs>
           )}
 
-          {/* Navigation - Only show for Registry Type */}
-          {formData.inspection_type === 'registro' && (
+          {/* Navigation */}
+          {/* Initial Step Navigation */}
+          {currentStep === 0 && (
+            <div className="flex justify-between">
+              <Button variant="outline" onClick={onClose}>
+                Cancelar
+              </Button>
+              <Button 
+                onClick={handleNext}
+                disabled={!formData.inspection_type || (formData.inspection_type === 'testes' && (!formData.test_type || formData.test_components.length === 0))}
+              >
+                Próximo
+              </Button>
+            </div>
+          )}
+
+          {/* Registry Type Navigation */}
+          {formData.inspection_type === 'registro' && currentStep > 0 && (
             <div className="flex justify-between">
               <div className="flex gap-2">
                 <Button 
                   variant="outline" 
                   onClick={handlePrevious}
-                  disabled={currentStep === 0}
                 >
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Voltar
                 </Button>
-                {inspectionId && (
+                {inspectionId && currentStep > 1 && (
                   <Button 
                     variant="destructive" 
                     onClick={handleDeleteInspection}
@@ -619,7 +644,7 @@ export function InspectionForm({ valve, onClose, onDelete }: InspectionFormProps
                 </Button>
                 {currentStep < INSPECTION_STEPS.length + 1 && (
                   <Button onClick={handleNext}>
-                    {currentStep === 0 ? 'Começar' : 
+                    {currentStep === 1 ? 'Começar Fotos' : 
                      currentStep === INSPECTION_STEPS.length ? 'Finalizar Fotos' : 'Próximo'}
                   </Button>
                 )}
@@ -633,33 +658,7 @@ export function InspectionForm({ valve, onClose, onDelete }: InspectionFormProps
             </div>
           )}
 
-          {/* Navigation for Initial Step */}
-          {currentStep === 0 && (
-            <div className="flex justify-between">
-              <Button variant="outline" onClick={onClose}>
-                Cancelar
-              </Button>
-              <Button 
-                onClick={handleNext}
-                disabled={!formData.inspection_type || (formData.inspection_type === 'testes' && (!formData.test_type || formData.test_components.length === 0))}
-              >
-                Próximo
-              </Button>
-            </div>
-          )}
-
-          {/* Info Step Navigation - For Registry Type Only */}
-          {currentStep === 1 && formData.inspection_type === 'registro' && (
-            <div className="flex justify-between">
-              <Button variant="outline" onClick={handlePrevious}>
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Voltar
-              </Button>
-              <Button onClick={handleNext}>
-                Próximo
-              </Button>
-            </div>
-          )}
+          {/* Test Type - Navigation handled by TestFlow */}
         </div>
       </DialogContent>
     </Dialog>

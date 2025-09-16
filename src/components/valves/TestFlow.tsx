@@ -6,14 +6,22 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Upload, Video, CheckCircle, XCircle, ArrowLeft } from "lucide-react";
+import { Upload, Video, CheckCircle, XCircle, ArrowLeft, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface TestFlowProps {
   valve: any;
   inspectionId: string;
+  testConfig: {
+    test_type: string;
+    test_components: string[];
+    instrumentos_utilizados: string;
+    pressao_abertura_frio_cdtp: string;
+    fluido_teste: string;
+  };
   onFinish: () => void;
   onBack: () => void;
+  onDelete: () => void;
 }
 
 interface TestResults {
@@ -24,15 +32,8 @@ interface TestResults {
   contrapressao_aprovada?: boolean;
 }
 
-export function TestFlow({ valve, inspectionId, onFinish, onBack }: TestFlowProps) {
+export function TestFlow({ valve, inspectionId, testConfig, onFinish, onBack, onDelete }: TestFlowProps) {
   const [currentStep, setCurrentStep] = useState(1);
-  const [testConfig, setTestConfig] = useState({
-    test_type: "",
-    test_components: [] as string[],
-    instrumentos_utilizados: "",
-    pressao_abertura_frio_cdtp: valve?.cdtp || "",
-    fluido_teste: "liquido"
-  });
   const [testResults, setTestResults] = useState<TestResults>({});
   const [uploadedVideos, setUploadedVideos] = useState<{[key: string]: string}>({});
 
@@ -69,7 +70,7 @@ export function TestFlow({ valve, inspectionId, onFinish, onBack }: TestFlowProp
   };
 
   const handleNext = () => {
-    if (currentStep < 3) {
+    if (currentStep < 2) {
       setCurrentStep(currentStep + 1);
     } else {
       onFinish();
@@ -89,122 +90,52 @@ export function TestFlow({ valve, inspectionId, onFinish, onBack }: TestFlowProp
       {/* Progress */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
-          {[1, 2, 3].map((step) => (
+          {[1, 2].map((step) => (
             <div key={step} className="flex items-center">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                 step <= currentStep ? 'bg-primary text-primary-foreground' : 'bg-muted'
               }`}>
                 {step < currentStep ? '✓' : step}
               </div>
-              {step < 3 && (
+              {step < 2 && (
                 <div className={`h-0.5 w-8 ${step < currentStep ? 'bg-primary' : 'bg-muted'}`} />
               )}
             </div>
           ))}
         </div>
         <div className="text-sm text-muted-foreground">
-          Etapa {currentStep} de 3
+          Etapa {currentStep} de 2
         </div>
       </div>
 
-      {/* Step 1: Test Configuration */}
+      {/* Step 1: Test Results */}
       {currentStep === 1 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Configuração do Teste</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Tipo de Teste</Label>
-                <Select 
-                  value={testConfig.test_type} 
-                  onValueChange={(value) => setTestConfig({...testConfig, test_type: value})}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o tipo de teste" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="teste_recebimento">Teste de Recebimento</SelectItem>
-                    <SelectItem value="teste_intermediario">Teste Intermediário</SelectItem>
-                    <SelectItem value="teste_final">Teste Final</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div>
-                <Label>Instrumentos Utilizados</Label>
-                <Input 
-                  value={testConfig.instrumentos_utilizados}
-                  onChange={(e) => setTestConfig({...testConfig, instrumentos_utilizados: e.target.value})}
-                  placeholder="Ex: Manômetro digital, etc."
-                />
-              </div>
-
-              <div>
-                <Label>CDTP (bar-g)</Label>
-                <Input 
-                  type="number"
-                  step="0.1"
-                  value={testConfig.pressao_abertura_frio_cdtp}
-                  onChange={(e) => setTestConfig({...testConfig, pressao_abertura_frio_cdtp: e.target.value})}
-                  placeholder="Ex: 2.5"
-                />
-              </div>
-
-              <div>
-                <Label>Fluido de Teste</Label>
-                <Select 
-                  value={testConfig.fluido_teste} 
-                  onValueChange={(value) => setTestConfig({...testConfig, fluido_teste: value})}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="liquido">Líquido</SelectItem>
-                    <SelectItem value="gasoso">Gasoso</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div>
-              <Label>Testes a Realizar</Label>
-              <div className="flex gap-4 mt-2">
-                {['pressao_abertura', 'estanqueidade', 'contrapressao'].map(component => (
-                  <div key={component} className="flex items-center space-x-2">
-                    <Checkbox 
-                      id={component}
-                      checked={testConfig.test_components.includes(component)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setTestConfig({...testConfig, test_components: [...testConfig.test_components, component]});
-                        } else {
-                          setTestConfig({...testConfig, test_components: testConfig.test_components.filter(c => c !== component)});
-                        }
-                      }}
-                    />
-                    <Label htmlFor={component}>
-                      {component === 'pressao_abertura' && 'Pressão de Abertura'}
-                      {component === 'estanqueidade' && 'Estanqueidade'}
-                      {component === 'contrapressao' && 'Contrapressão'}
-                    </Label>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Step 2: Test Results */}
-      {currentStep === 2 && (
         <Card>
           <CardHeader>
             <CardTitle>Resultados dos Testes</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
+            <div className="bg-blue-50 border border-blue-200 rounded p-4 mb-6">
+              <h4 className="font-medium text-blue-800 mb-2">Configuração do Teste</h4>
+              <div className="grid grid-cols-3 gap-4 text-sm text-blue-700">
+                <div>
+                  <strong>Tipo:</strong> {testConfig.test_type === 'teste_recebimento' ? 'Teste de Recebimento' : 
+                                         testConfig.test_type === 'teste_intermediario' ? 'Teste Intermediário' : 'Teste Final'}
+                </div>
+                <div>
+                  <strong>CDTP:</strong> {testConfig.pressao_abertura_frio_cdtp} bar-g
+                </div>
+                <div>
+                  <strong>Fluido:</strong> {testConfig.fluido_teste === 'liquido' ? 'Líquido' : 'Gasoso'}
+                </div>
+              </div>
+              {testConfig.instrumentos_utilizados && (
+                <div className="mt-2 text-sm text-blue-700">
+                  <strong>Instrumentos:</strong> {testConfig.instrumentos_utilizados}
+                </div>
+              )}
+            </div>
+
             {testConfig.test_components.includes('pressao_abertura') && (
               <div className="space-y-4">
                 <h4 className="font-medium">Teste de Pressão de Abertura</h4>
@@ -313,8 +244,8 @@ export function TestFlow({ valve, inspectionId, onFinish, onBack }: TestFlowProp
         </Card>
       )}
 
-      {/* Step 3: Video Upload */}
-      {currentStep === 3 && (
+      {/* Step 2: Video Upload */}
+      {currentStep === 2 && (
         <Card>
           <CardHeader>
             <CardTitle>Upload de Vídeos dos Testes</CardTitle>
@@ -362,15 +293,24 @@ export function TestFlow({ valve, inspectionId, onFinish, onBack }: TestFlowProp
 
       {/* Navigation */}
       <div className="flex justify-between">
-        <Button 
-          variant="outline" 
-          onClick={handlePrevious}
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Voltar
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={handlePrevious}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar
+          </Button>
+          <Button 
+            variant="destructive" 
+            onClick={onDelete}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Excluir Teste
+          </Button>
+        </div>
         <Button onClick={handleNext}>
-          {currentStep === 3 ? 'Finalizar' : 'Próximo'}
+          {currentStep === 2 ? 'Finalizar' : 'Próximo'}
         </Button>
       </div>
     </div>
