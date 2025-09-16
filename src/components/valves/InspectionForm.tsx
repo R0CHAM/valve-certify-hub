@@ -8,15 +8,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Save, Camera, X } from "lucide-react";
+import { Save, Camera, X, ArrowLeft, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { PhotoUpload } from "./PhotoUpload";
+import { TestFlow } from "./TestFlow";
 
 interface InspectionFormProps {
   valve: any;
   onClose: () => void;
+  onDelete?: (inspectionId: string) => void;
 }
 
 const INSPECTION_STEPS = [
@@ -47,7 +49,7 @@ const ACTIONS = [
   "Desmontagem/Inspeção", "Limpeza/Lapidação", "Reparo", "Calibração", "Montagem"
 ];
 
-export function InspectionForm({ valve, onClose }: InspectionFormProps) {
+export function InspectionForm({ valve, onClose, onDelete }: InspectionFormProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [inspectionId, setInspectionId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -179,6 +181,36 @@ export function InspectionForm({ valve, onClose }: InspectionFormProps) {
     } else {
       await finishInspection();
     }
+  };
+
+  const handlePrevious = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const handleDeleteInspection = async () => {
+    if (!inspectionId) return;
+
+    try {
+      const { error } = await supabase
+        .from('inspecoes')
+        .delete()
+        .eq('id', inspectionId);
+
+      if (error) throw error;
+      
+      toast.success('Inspeção excluída com sucesso!');
+      if (onDelete) onDelete(inspectionId);
+      onClose();
+    } catch (error) {
+      console.error('Erro ao excluir inspeção:', error);
+      toast.error('Erro ao excluir inspeção');
+    }
+  };
+
+  const handleTestFlowFinish = async () => {
+    await finishInspection();
   };
 
   const addComponent = () => {
@@ -427,7 +459,18 @@ export function InspectionForm({ valve, onClose }: InspectionFormProps) {
             </Card>
           )}
 
-          {currentStep > 1 && currentStep <= INSPECTION_STEPS.length && inspectionId && (
+          {/* Test Flow */}
+          {formData.inspection_type === 'testes' && currentStep === 1 && inspectionId && (
+            <TestFlow 
+              valve={valve}
+              inspectionId={inspectionId}
+              onFinish={handleTestFlowFinish}
+              onBack={handlePrevious}
+            />
+          )}
+
+          {/* Photo Flow for Registry Type */}
+          {formData.inspection_type === 'registro' && currentStep > 1 && currentStep <= INSPECTION_STEPS.length && inspectionId && (
             <PhotoUpload 
               inspectionId={inspectionId}
               step={INSPECTION_STEPS[currentStep - 1]}
@@ -435,7 +478,8 @@ export function InspectionForm({ valve, onClose }: InspectionFormProps) {
             />
           )}
 
-          {currentStep === INSPECTION_STEPS.length + 1 && (
+          {/* Components and Actions - Only for Registry Type */}
+          {formData.inspection_type === 'registro' && currentStep === INSPECTION_STEPS.length + 1 && (
             <Tabs defaultValue="components">
               <TabsList>
                 <TabsTrigger value="components">Componentes</TabsTrigger>
@@ -547,35 +591,75 @@ export function InspectionForm({ valve, onClose }: InspectionFormProps) {
             </Tabs>
           )}
 
-          <div className="flex justify-between">
-            <div>
-              {currentStep > 0 && (
+          {/* Navigation - Only show for Registry Type */}
+          {formData.inspection_type === 'registro' && (
+            <div className="flex justify-between">
+              <div className="flex gap-2">
                 <Button 
                   variant="outline" 
-                  onClick={() => setCurrentStep(currentStep - 1)}
+                  onClick={handlePrevious}
+                  disabled={currentStep === 0}
                 >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
                   Voltar
                 </Button>
-              )}
+                {inspectionId && (
+                  <Button 
+                    variant="destructive" 
+                    onClick={handleDeleteInspection}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Excluir Inspeção
+                  </Button>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={onClose}>
+                  Cancelar
+                </Button>
+                {currentStep < INSPECTION_STEPS.length + 1 && (
+                  <Button onClick={handleNext}>
+                    {currentStep === 0 ? 'Começar' : 
+                     currentStep === INSPECTION_STEPS.length ? 'Finalizar Fotos' : 'Próximo'}
+                  </Button>
+                )}
+                {currentStep === INSPECTION_STEPS.length + 1 && (
+                  <Button onClick={finishInspection}>
+                    <Save className="h-4 w-4 mr-2" />
+                    Finalizar Inspeção
+                  </Button>
+                )}
+              </div>
             </div>
-            <div className="flex gap-2">
+          )}
+
+          {/* Navigation for Initial Step */}
+          {currentStep === 0 && (
+            <div className="flex justify-between">
               <Button variant="outline" onClick={onClose}>
                 Cancelar
               </Button>
-              {currentStep < INSPECTION_STEPS.length + 1 && (
-                <Button onClick={handleNext}>
-                  {currentStep === 0 ? 'Começar' : 
-                   currentStep === INSPECTION_STEPS.length ? 'Finalizar Fotos' : 'Próximo'}
-                </Button>
-              )}
-              {currentStep === INSPECTION_STEPS.length + 1 && (
-                <Button onClick={finishInspection}>
-                  <Save className="h-4 w-4 mr-2" />
-                  Finalizar Inspeção
-                </Button>
-              )}
+              <Button 
+                onClick={handleNext}
+                disabled={!formData.inspection_type || (formData.inspection_type === 'testes' && (!formData.test_type || formData.test_components.length === 0))}
+              >
+                Próximo
+              </Button>
             </div>
-          </div>
+          )}
+
+          {/* Info Step Navigation - For Registry Type Only */}
+          {currentStep === 1 && formData.inspection_type === 'registro' && (
+            <div className="flex justify-between">
+              <Button variant="outline" onClick={handlePrevious}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Voltar
+              </Button>
+              <Button onClick={handleNext}>
+                Próximo
+              </Button>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
