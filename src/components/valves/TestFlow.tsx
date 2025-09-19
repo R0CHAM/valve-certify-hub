@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Upload, Video, CheckCircle, XCircle, ArrowLeft, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TestFlowProps {
   valve: any;
@@ -59,20 +60,90 @@ export function TestFlow({ valve, inspectionId, testConfig, onFinish, onBack, on
       const fileExt = file.name.split('.').pop();
       const fileName = `${inspectionId}/videos/${testType}/${Date.now()}.${fileExt}`;
       
-      // Simular upload (aqui você implementaria o upload real)
+      // Upload para Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('inspecao-fotos')
+        .upload(fileName, file);
+
+      if (error) throw error;
+
       toast.success(`Vídeo do ${testType} carregado com sucesso!`);
       setUploadedVideos(prev => ({
         ...prev,
         [testType]: fileName
       }));
     } catch (error) {
+      console.error('Erro ao carregar vídeo:', error);
       toast.error('Erro ao carregar vídeo');
     }
   };
 
-  const handleNext = () => {
-    if (currentStep < 2) {
-      setCurrentStep(currentStep + 1);
+  const saveTestResults = async () => {
+    try {
+      const updateData: any = {};
+
+      if (testConfig.test_components.includes('pressao_abertura')) {
+        updateData.pressao_abertura_teste1 = testResults.pressao_abertura_teste1;
+        updateData.pressao_abertura_teste2 = testResults.pressao_abertura_teste2;
+        updateData.pressao_abertura_teste3 = testResults.pressao_abertura_teste3;
+      }
+
+      if (testConfig.test_components.includes('estanqueidade')) {
+        updateData.estanqueidade_bpm = testResults.estanqueidade_bpm;
+      }
+
+      if (testConfig.test_components.includes('contrapressao')) {
+        updateData.contrapressao_aprovada = testResults.contrapressao_aprovada;
+        updateData.observacao_reprovacao = testResults.observacao_reprovacao;
+      }
+
+      const { error } = await supabase
+        .from('inspecoes')
+        .update(updateData)
+        .eq('id', inspectionId);
+
+      if (error) throw error;
+      toast.success('Resultados dos testes salvos!');
+    } catch (error) {
+      console.error('Erro ao salvar resultados:', error);
+      toast.error('Erro ao salvar resultados dos testes');
+    }
+  };
+
+  const validateStep1 = () => {
+    if (testConfig.test_components.includes('pressao_abertura')) {
+      if (!testResults.pressao_abertura_teste1 || !testResults.pressao_abertura_teste2 || !testResults.pressao_abertura_teste3) {
+        toast.error('Todos os testes de pressão de abertura são obrigatórios');
+        return false;
+      }
+    }
+    
+    if (testConfig.test_components.includes('estanqueidade')) {
+      if (testResults.estanqueidade_bpm === undefined || testResults.estanqueidade_bpm === null) {
+        toast.error('O campo BPM é obrigatório para teste de estanqueidade');
+        return false;
+      }
+    }
+    
+    if (testConfig.test_components.includes('contrapressao')) {
+      if (testResults.contrapressao_aprovada === undefined) {
+        toast.error('Selecione se o teste de contrapressão foi aprovado ou reprovado');
+        return false;
+      }
+      if (testResults.contrapressao_aprovada === false && !testResults.observacao_reprovacao) {
+        toast.error('Observação é obrigatória quando o teste é reprovado');
+        return false;
+      }
+    }
+    
+    return true;
+  };
+
+  const handleNext = async () => {
+    if (currentStep === 1) {
+      if (!validateStep1()) return;
+      await saveTestResults();
+      setCurrentStep(2);
     } else {
       onFinish();
     }

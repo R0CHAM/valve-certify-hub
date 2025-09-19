@@ -171,14 +171,14 @@ export function InspectionForm({ valve, onClose, onDelete }: InspectionFormProps
   };
 
   const handleNext = async () => {
-    if (currentStep === 1) {
+    if (currentStep === 1 && !inspectionId) {
       const newInspectionId = await createInspection();
       if (!newInspectionId) return;
     }
     
-    if (currentStep < INSPECTION_STEPS.length) {
+    if (formData.inspection_type === 'registro' && currentStep < INSPECTION_STEPS.length) {
       setCurrentStep(currentStep + 1);
-    } else {
+    } else if (formData.inspection_type === 'registro') {
       await finishInspection();
     }
   };
@@ -459,22 +459,28 @@ export function InspectionForm({ valve, onClose, onDelete }: InspectionFormProps
           )}
 
           {/* Test Flow - Replace entire inspection flow */}
-          {formData.inspection_type === 'testes' && currentStep === 1 && inspectionId && (
+          {formData.inspection_type === 'testes' && currentStep >= 1 && (
             <div className="space-y-6">
-              <TestFlow 
-                valve={valve}
-                inspectionId={inspectionId}
-                testConfig={{
-                  test_type: formData.test_type,
-                  test_components: formData.test_components,
-                  instrumentos_utilizados: formData.instrumentos_utilizados,
-                  pressao_abertura_frio_cdtp: formData.pressao_abertura_frio_cdtp,
-                  fluido_teste: formData.fluido_teste
-                }}
-                onFinish={handleTestFlowFinish}
-                onBack={handlePrevious}
-                onDelete={handleDeleteInspection}
-              />
+              {inspectionId ? (
+                <TestFlow 
+                  valve={valve}
+                  inspectionId={inspectionId}
+                  testConfig={{
+                    test_type: formData.test_type,
+                    test_components: formData.test_components,
+                    instrumentos_utilizados: formData.instrumentos_utilizados,
+                    pressao_abertura_frio_cdtp: formData.pressao_abertura_frio_cdtp,
+                    fluido_teste: formData.fluido_teste
+                  }}
+                  onFinish={handleTestFlowFinish}
+                  onBack={handlePrevious}
+                  onDelete={handleDeleteInspection}
+                />
+              ) : (
+                <div className="text-center p-4">
+                  <p>Criando inspeção...</p>
+                </div>
+              )}
             </div>
           )}
 
