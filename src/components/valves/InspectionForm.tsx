@@ -358,95 +358,94 @@ export function InspectionForm({ valve, onClose, onDelete }: InspectionFormProps
                 <CardTitle>Informações da Inspeção</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Tipo de Inspeção</Label>
-                    <Select value={formData.tipo_inspecao} onValueChange={(value) => 
-                      setFormData({...formData, tipo_inspecao: value})}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="recebimento">Recebimento</SelectItem>
-                        <SelectItem value="periodica">Periódica</SelectItem>
-                        <SelectItem value="extraordinaria">Extraordinária</SelectItem>
-                        <SelectItem value="visual_externa">Visual Externa</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Instrumentos Utilizados</Label>
-                    <Input 
-                      value={formData.instrumentos_utilizados}
-                      onChange={(e) => setFormData({...formData, instrumentos_utilizados: e.target.value})}
-                    />
-                  </div>
-                  <div>
-                    <Label>Pressão Abertura Frio CDTP (bar-g)</Label>
-                    <Input 
-                      type="number"
-                      value={formData.pressao_abertura_frio_cdtp}
-                      onChange={(e) => setFormData({...formData, pressao_abertura_frio_cdtp: e.target.value})}
-                      placeholder="Ex: 2.5"
-                    />
-                  </div>
-                  <div>
-                    <Label>Fluido de Teste</Label>
-                    <Select 
-                      value={formData.fluido_teste} 
-                      onValueChange={(value) => setFormData({...formData, fluido_teste: value})}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="liquido">Líquido</SelectItem>
-                        <SelectItem value="gasoso">Gasoso</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="flex gap-4">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="teste_integridade"
-                      checked={formData.teste_integridade_juntas}
-                      onCheckedChange={(checked) => 
-                        setFormData({...formData, teste_integridade_juntas: !!checked})}
-                    />
-                    <Label htmlFor="teste_integridade">Teste Integridade Juntas</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="teste_estanqueidade"
-                      checked={formData.teste_estanqueidade}
-                      onCheckedChange={(checked) => 
-                        setFormData({...formData, teste_estanqueidade: !!checked})}
-                    />
-                    <Label htmlFor="teste_estanqueidade">Teste Estanqueidade</Label>
-                  </div>
-                   {formData.teste_estanqueidade && (
-                    <div className="ml-6">
-                      <Label>BPM (Bolhas por Minuto)</Label>
+                {formData.inspection_type === 'registro' && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Tipo de Inspeção</Label>
+                      <Select value={formData.tipo_inspecao} onValueChange={(value) => 
+                        setFormData({...formData, tipo_inspecao: value})}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="recebimento">Recebimento</SelectItem>
+                          <SelectItem value="periodica">Periódica</SelectItem>
+                          <SelectItem value="extraordinaria">Extraordinária</SelectItem>
+                          <SelectItem value="visual_externa">Visual Externa</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Código do Lacre</Label>
                       <Input 
-                        type="number"
-                        value={formData.bmp_estanqueidade}
-                        onChange={(e) => setFormData({...formData, bmp_estanqueidade: e.target.value})}
-                        placeholder="Ex: 5"
+                        value={formData.codigo_lacre}
+                        onChange={(e) => setFormData({...formData, codigo_lacre: e.target.value})}
+                        placeholder="Ex: LAC-001"
                       />
                     </div>
-                  )}
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="selo_vr"
-                      checked={formData.selo_vr}
-                      onCheckedChange={(checked) => 
-                        setFormData({...formData, selo_vr: !!checked})}
-                    />
-                    <Label htmlFor="selo_vr">Selo VR</Label>
                   </div>
-                </div>
+                )}
+
+                {formData.inspection_type === 'registro' && (
+                  <div className="flex gap-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="teste_integridade"
+                        checked={formData.teste_integridade_juntas}
+                        onCheckedChange={(checked) => 
+                          setFormData({...formData, teste_integridade_juntas: !!checked})}
+                      />
+                      <Label htmlFor="teste_integridade">Teste Integridade Juntas</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="selo_vr"
+                        checked={formData.selo_vr}
+                        onCheckedChange={(checked) => 
+                          setFormData({...formData, selo_vr: !!checked})}
+                      />
+                      <Label htmlFor="selo_vr">Selo VR</Label>
+                    </div>
+                  </div>
+                )}
+
+                {formData.inspection_type === 'testes' && (
+                  <div className="grid grid-cols-3 gap-4 mt-4">
+                    <div>
+                      <Label>CDTP (bar-g)</Label>
+                      <Input 
+                        type="number"
+                        value={formData.pressao_abertura_frio_cdtp}
+                        onChange={(e) => setFormData({...formData, pressao_abertura_frio_cdtp: e.target.value})}
+                        placeholder="Ex: 2.5"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label>Instrumentos Utilizados</Label>
+                      <Input 
+                        value={formData.instrumentos_utilizados}
+                        onChange={(e) => setFormData({...formData, instrumentos_utilizados: e.target.value})}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label>Fluido de Teste</Label>
+                      <Select 
+                        value={formData.fluido_teste} 
+                        onValueChange={(value) => setFormData({...formData, fluido_teste: value})}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="liquido">Líquido</SelectItem>
+                          <SelectItem value="gasoso">Gasoso</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                )}
 
                 <div>
                   <Label>Observações</Label>

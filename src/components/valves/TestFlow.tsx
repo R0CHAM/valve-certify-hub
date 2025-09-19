@@ -30,6 +30,7 @@ interface TestResults {
   pressao_abertura_teste3?: number;
   estanqueidade_bpm?: number;
   contrapressao_aprovada?: boolean;
+  observacao_reprovacao?: string;
 }
 
 export function TestFlow({ valve, inspectionId, testConfig, onFinish, onBack, onDelete }: TestFlowProps) {
@@ -147,30 +148,33 @@ export function TestFlow({ valve, inspectionId, testConfig, onFinish, onBack, on
                 </div>
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <Label>Teste 1 (bar-g)</Label>
+                    <Label>Teste 1 (bar-g) *</Label>
                     <Input 
                       type="number"
                       step="0.01"
                       value={testResults.pressao_abertura_teste1 || ''}
                       onChange={(e) => setTestResults({...testResults, pressao_abertura_teste1: parseFloat(e.target.value)})}
+                      required
                     />
                   </div>
                   <div>
-                    <Label>Teste 2 (bar-g)</Label>
+                    <Label>Teste 2 (bar-g) *</Label>
                     <Input 
                       type="number"
                       step="0.01"
                       value={testResults.pressao_abertura_teste2 || ''}
                       onChange={(e) => setTestResults({...testResults, pressao_abertura_teste2: parseFloat(e.target.value)})}
+                      required
                     />
                   </div>
                   <div>
-                    <Label>Teste 3 (bar-g)</Label>
+                    <Label>Teste 3 (bar-g) *</Label>
                     <Input 
                       type="number"
                       step="0.01"
                       value={testResults.pressao_abertura_teste3 || ''}
                       onChange={(e) => setTestResults({...testResults, pressao_abertura_teste3: parseFloat(e.target.value)})}
+                      required
                     />
                     {testResults.pressao_abertura_teste3 && (
                       <div className="mt-2">
@@ -196,13 +200,17 @@ export function TestFlow({ valve, inspectionId, testConfig, onFinish, onBack, on
               <div className="space-y-4">
                 <h4 className="font-medium">Teste de Estanqueidade</h4>
                 <div>
-                  <Label>Bolhas por Minuto (BPM)</Label>
+                  <Label>Bolhas por Minuto (BPM) *</Label>
                   <Input 
                     type="number"
                     value={testResults.estanqueidade_bpm || ''}
                     onChange={(e) => setTestResults({...testResults, estanqueidade_bpm: parseFloat(e.target.value)})}
                     placeholder="Ex: 0"
+                    required
                   />
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Registre o número de bolhas observadas por minuto
+                  </p>
                 </div>
               </div>
             )}
@@ -238,6 +246,17 @@ export function TestFlow({ valve, inspectionId, testConfig, onFinish, onBack, on
                     </Label>
                   </div>
                 </div>
+                {testResults.contrapressao_aprovada === false && (
+                  <div className="mt-4">
+                    <Label>Observação sobre a reprovação *</Label>
+                    <Textarea 
+                      value={testResults.observacao_reprovacao || ''}
+                      onChange={(e) => setTestResults({...testResults, observacao_reprovacao: e.target.value})}
+                      placeholder="Descreva o motivo da reprovação..."
+                      required
+                    />
+                  </div>
+                )}
               </div>
             )}
           </CardContent>
